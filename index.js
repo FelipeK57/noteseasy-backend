@@ -17,12 +17,18 @@ app.use(express.json());
 
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
-  console.log(name, email, password);
   try {
     console.log("Creando usuario...");
-    const user = await User.create({ name, email, password });
-    console.log("Usuario creado", user);
-    res.status(201).json({ user: user });
+    const user = await User.findOne({ where: { email } });
+    console.log("Usuario encontrado", user);
+    if (user != null) {
+      console.log("El email ya está registrado");
+      return res.status(400).json({ error: "Al parecer el correo electronico con el que te intentas registrar ya esta en uso, intenta con otro." });
+    }
+    console.log("Creando usuario...");
+    const newUser = await User.create({ name, email, password });
+    console.log("Usuario creado", newUser);
+    res.status(201).json({ user: newUser });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

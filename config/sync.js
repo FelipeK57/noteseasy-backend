@@ -6,7 +6,7 @@ const Task = require("../models/task");
 
 const syncDatabase = async () => {
   try {
-    await sequelize.sync({ force: true }); // Elimina tablas existentes y las vuelve a crear
+    await sequelize.sync({ force: true });
     console.log("Tablas sincronizadas.");
   } catch (error) {
     console.error("Error al sincronizar la base de datos:", error);
