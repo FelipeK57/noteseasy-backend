@@ -21,9 +21,12 @@ app.post("/register", async (req, res) => {
     console.log("Creando usuario...");
     const user = await User.findOne({ where: { email } });
     console.log("Usuario encontrado", user);
-    if (user != null) {
+    if (user) {
       console.log("El email ya está registrado");
-      return res.status(400).json({ error: "Al parecer el correo electronico con el que te intentas registrar ya esta en uso, intenta con otro." });
+      return res.status(400).json({
+        error:
+          "El correo proporcionado ya está registrado. Por favor, inicia sesión o utiliza un correo diferente.",
+      });
     }
     console.log("Creando usuario...");
     const newUser = await User.create({ name, email, password });
@@ -36,14 +39,32 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ where: { email } });
-  if (user && bcrypt.compareSync(password, user.password)) {
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+  try {
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(401).json({
+        error:
+          "Credenciales incorrectas. Por favor, verifica tu correo y contraseña.",
+        xv,
+      });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({
+        error:
+          "Credenciales incorrectas. Por favor, verifica tu correo y contraseña.",
+      });
+    }
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-    res.status(200).json({ auth: true, token });
-  } else {
-    res.status(401).json({ auth: false, message: "Credenciales inválidas" });
+    return res.status(200).json({ auth: true, token });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Ocurrió un error en el servidor." });
   }
 });
 
